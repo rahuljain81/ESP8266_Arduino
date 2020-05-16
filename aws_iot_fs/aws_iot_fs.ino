@@ -1,3 +1,4 @@
+//https://electronicsinnovation.com/how-to-connect-nodemcu-esp8266-with-aws-iot-core-using-arduino-ide-mqtt/
 /*Developed by M V Subrahmanyam - https://www.linkedin.com/in/veera-subrahmanyam-mediboina-b63997145/
 Project: AWS | NodeMCU ESP32 Tutorials
 Electronics Innovation - www.electronicsinnovation.com
@@ -179,11 +180,12 @@ void loop() {
   if (now - lastMsg > 2000) {
     lastMsg = now;
     ++value;
-    snprintf (msg, 75, "{\"message\": \"hello world #%ld\"}", value);
+    snprintf (msg, 75, "{\"message\": \"hi #%ld\"}", value);
     Serial.print("Publish message: ");
     Serial.println(msg);
-    client.publish("outTopic", msg);
-    Serial.print("Heap: "); Serial.println(ESP.getFreeHeap()); //Low heap can cause problems
+    client.publish("NEHA", msg);
+    Serial.print("Heap: "); 
+    Serial.println(ESP.getFreeHeap()); //Low heap can cause problems
   }
   digitalWrite(LED_BUILTIN, HIGH); // turn the LED on (HIGH is the voltage level)
   delay(100); // wait for a second
