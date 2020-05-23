@@ -1,4 +1,4 @@
-//https://electronicsinnovation.com/how-to-connect-nodemcu-esp8266-with-aws-iot-core-using-arduino-ide-mqtt/
+//https://electronicsinnovation.com/storing-esp8266-data-into-amazon-dynamodb-using-aws-iot-coremqtt-arduino/
 /*Developed by M V Subrahmanyam - https://www.linkedin.com/in/veera-subrahmanyam-mediboina-b63997145/
 Project: AWS | NodeMCU ESP32 Tutorials
 Electronics Innovation - www.electronicsinnovation.com
@@ -36,6 +36,15 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org");
 
 const char* AWS_endpoint = "a3psj0keptsnuf-ats.iot.ap-south-1.amazonaws.com"; //MQTT broker ip
 
+//==========================================================================
+#define BUFFER_LEN 256
+long lastMsg = 0;
+char msg[BUFFER_LEN];
+int value = 0;
+byte mac[6];
+char mac_Id[18];
+//===========================================================================
+
 void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Message arrived [");
   Serial.print(topic);
@@ -48,9 +57,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
 WiFiClientSecure espClient;
 PubSubClient client(AWS_endpoint, 8883, callback, espClient); //set MQTT port number to 8883 as per //standard
-long lastMsg = 0;
-char msg[50];
-int value = 0;
 
 void setup_wifi() {
   delay(10);
@@ -170,6 +176,13 @@ void setup() {
   Serial.println("ca failed");
 
   Serial.print("Heap: "); Serial.println(ESP.getFreeHeap());
+  
+  //==========================================================================
+  WiFi.macAddress(mac);
+  snprintf(mac_Id, sizeof(mac_Id), "%02x:%02x:%02x:%02x:%02x:%02x",
+  mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+  Serial.print(mac_Id);
+  //============================================================================
 }
 
 void loop() {
@@ -182,13 +195,19 @@ void loop() {
   long now = millis();
   if (now - lastMsg > 2000) {
     lastMsg = now;
-    ++value;
-    snprintf (msg, 75, "{\"message\": \"hi #%ld\"}", value);
-    Serial.print("Publish message");
+    //========================================================================
+    String macIdStr = mac_Id;
+    uint8_t randomNumber = random(20, 50);
+    String randomString = String(random(0xffff), HEX);
+    snprintf (msg, BUFFER_LEN, "{\"mac_Id\" : \"%s\", \"random_number\" : %d, \"random_string\" : \"%s\"}", macIdStr.c_str(), randomNumber, randomString.c_str());
+    
+    Serial.print("Publish message: ");
     Serial.println(msg);
+    //mqttClient.publish("outTopic", msg);
     client.publish(PUBLISH, msg);
+    //=========================================================================
     //Serial.print("Heap: "); 
-    Serial.println(ESP.getFreeHeap()); //Low heap can cause problems
+    //Serial.println(ESP.getFreeHeap()); //Low heap can cause problems
   }
   digitalWrite(LED_BUILTIN, HIGH); // turn the LED on (HIGH is the voltage level)
   delay(100); // wait for a second
